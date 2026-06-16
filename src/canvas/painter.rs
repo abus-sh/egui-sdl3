@@ -32,6 +32,14 @@ const BYTES_PER_PIXEL: usize = 4;
 pub struct Painter {
     textures: HashMap<egui::TextureId, Texture>,
     texture_creator: TextureCreator<WindowContext>,
+    /// Reused across meshes and frames so `paint_mesh` repacks egui vertices
+    /// into SDL's layout without allocating a fresh `Vec` per mesh.
+    vertex_scratch: Vec<SDL_Vertex>,
+    /// Clip rect currently applied to the canvas within a `paint_primitives`
+    /// run, so meshes sharing a clip skip a redundant `SDL_RenderSetClipRect`.
+    /// Reset to `None` at the start of each run because the `pub canvas` may be
+    /// mutated externally between runs.
+    last_clip: Option<Rect>,
 
     pub canvas: Canvas<Window>,
 }
@@ -45,6 +53,8 @@ impl Painter {
             textures: HashMap::new(),
             canvas,
             texture_creator,
+            vertex_scratch: Vec::new(),
+            last_clip: None,
         }
     }
 
@@ -81,6 +91,9 @@ impl Painter {
 
     /// Main entry-point for painting a frame.
     pub fn paint_primitives(&mut self, pixels_per_point: f32, paint_jobs: Vec<ClippedPrimitive>) {
+        // The `pub canvas` may have been drawn to (and its clip changed) since
+        // the last run, so don't assume any clip is still applied.
+        self.last_clip = None;
         for job in paint_jobs.into_iter() {
             match job.primitive {
                 Primitive::Mesh(mesh) => self.paint_mesh(pixels_per_point, job.clip_rect, mesh),
@@ -89,6 +102,14 @@ impl Painter {
                     log::warn!("PaintCallbacks are not supported")
                 }
             }
+        }
+        // Clear the clip once, after all meshes, so content the caller draws on
+        // the `pub canvas` after `paint()` isn't clipped to the last mesh's rect.
+        // Guard on `last_clip`: a frame that drew no meshes never set a clip, so
+        // leave the caller's own clip untouched — exact parity with the old code,
+        // which only ever touched the clip from inside `paint_mesh`.
+        if self.last_clip.is_some() {
+            self.canvas.set_clip_rect(None);
         }
     }
 
@@ -141,15 +162,26 @@ impl Painter {
             (max.x - min.x) as u32,
             (max.y - min.y) as u32,
         );
-        self.canvas.set_clip_rect(clip_rect);
+        // Adjacent meshes (e.g. all glyphs in one panel) usually share a clip;
+        // only hit `SDL_RenderSetClipRect` when it actually changes.
+        if self.last_clip != Some(clip_rect) {
+            self.canvas.set_clip_rect(clip_rect);
+            self.last_clip = Some(clip_rect);
+        }
 
-        let vertices: Vec<SDL_Vertex> = mesh
-            .vertices
-            .iter()
-            .map(|v| into_sdl_vertex(v, pixels_per_point))
-            .collect();
-        let verts_ptr = vertices.as_ptr();
-        let verts_len = vertices.len() as c_int;
+        // Repack egui vertices into SDL's layout in a reused buffer. A zero-copy
+        // cast is impossible (SDL_Vertex is {position, color, tex_coord} vs egui
+        // {pos, uv, color}, and position is scaled by ppp), but reusing the
+        // allocation across meshes/frames avoids a malloc+free per mesh.
+        self.vertex_scratch.clear();
+        self.vertex_scratch.reserve(mesh.vertices.len());
+        self.vertex_scratch.extend(
+            mesh.vertices
+                .iter()
+                .map(|v| into_sdl_vertex(v, pixels_per_point)),
+        );
+        let verts_ptr = self.vertex_scratch.as_ptr();
+        let verts_len = self.vertex_scratch.len() as c_int;
         let indcs_ptr = mesh.indices.as_ptr() as *const c_int;
         let indcs_len = mesh.indices.len() as c_int;
 
@@ -175,8 +207,6 @@ impl Painter {
         if result != 0 {
             log::error!("SDL_RenderGeometry failed: {}", result);
         }
-
-        self.canvas.set_clip_rect(None);
     }
 }
 
