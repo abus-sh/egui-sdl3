@@ -73,7 +73,10 @@ impl EguiGlow {
         let pixels_per_point = self.run_output.pixels_per_point;
         let (textures_delta, shapes) = self.run_output.take();
         let clipped_primitives = self.ctx.tessellate(shapes, pixels_per_point);
-        let screen_size = self.state.get_window_size();
+        // egui laid out for the drawable (physical) size and the GL viewport
+        // covers the physical framebuffer, so pass drawable size — not the
+        // logical window size — or content is clipped/scaled wrong on HiDPI.
+        let screen_size = self.state.get_drawable_size();
         self.painter.paint_and_update_textures(
             screen_size.into(),
             pixels_per_point,
@@ -84,7 +87,8 @@ impl EguiGlow {
 
     #[inline]
     pub fn clear(&self, color: [f32; 4]) {
-        let size = self.state.get_window_size();
+        // Physical framebuffer size, matching the viewport used in `paint`.
+        let size = self.state.get_drawable_size();
         self.painter.clear(size.into(), color);
     }
 
