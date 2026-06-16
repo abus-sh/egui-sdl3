@@ -349,16 +349,14 @@ impl State {
                 y,
                 pressure,
                 ..
-            } => self.on_touch(
-                TouchInfo {
-                    phase: egui::TouchPhase::Start,
-                    touch_id: *touch_id,
-                    finger_id: *finger_id,
-                    x: *x,
-                    y: *y,
-                    pressure: *pressure,
-                },
-            ),
+            } => self.on_touch(TouchInfo {
+                phase: egui::TouchPhase::Start,
+                touch_id: *touch_id,
+                finger_id: *finger_id,
+                x: *x,
+                y: *y,
+                pressure: *pressure,
+            }),
             FingerUp {
                 touch_id,
                 finger_id,
@@ -366,16 +364,14 @@ impl State {
                 y,
                 pressure,
                 ..
-            } => self.on_touch(
-                TouchInfo {
-                    phase: egui::TouchPhase::End,
-                    touch_id: *touch_id,
-                    finger_id: *finger_id,
-                    x: *x,
-                    y: *y,
-                    pressure: *pressure,
-                },
-            ),
+            } => self.on_touch(TouchInfo {
+                phase: egui::TouchPhase::End,
+                touch_id: *touch_id,
+                finger_id: *finger_id,
+                x: *x,
+                y: *y,
+                pressure: *pressure,
+            }),
             FingerMotion {
                 touch_id,
                 finger_id,
@@ -383,16 +379,14 @@ impl State {
                 y,
                 pressure,
                 ..
-            } => self.on_touch(
-                TouchInfo {
-                    phase: egui::TouchPhase::Move,
-                    touch_id: *touch_id,
-                    finger_id: *finger_id,
-                    x: *x,
-                    y: *y,
-                    pressure: *pressure,
-                },
-            ),
+            } => self.on_touch(TouchInfo {
+                phase: egui::TouchPhase::Move,
+                touch_id: *touch_id,
+                finger_id: *finger_id,
+                x: *x,
+                y: *y,
+                pressure: *pressure,
+            }),
             _ => EventResponse::default(),
         }
     }
