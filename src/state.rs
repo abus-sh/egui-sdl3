@@ -103,6 +103,15 @@ impl State {
         self.window_size
     }
 
+    /// Drawable (physical pixel) size, cached and refreshed on resize.
+    ///
+    /// This is the size a GPU backend should use for its viewport/framebuffer:
+    /// on HiDPI it differs from [`Self::get_window_size`] (logical points).
+    #[inline]
+    pub fn get_drawable_size(&self) -> (u32, u32) {
+        self.drawable_size
+    }
+
     #[inline]
     pub fn get_pointer_pos_in_points(&self) -> Option<egui::Pos2> {
         self.pointer_pos_in_points
@@ -185,6 +194,37 @@ impl State {
         self.egui_input.take()
     }
 
+    /// Pixels-per-point for mapping window pixel coordinates to egui points.
+    ///
+    /// Built from the *cached* native pixels-per-point — the same value
+    /// [`Self::take_egui_input`] lays `screen_rect` out with (stored on the
+    /// viewport by [`Self::on_size_chage`]) — times the *live* zoom factor.
+    /// Reading the stored native ppp instead of re-querying the window keeps
+    /// pointer coordinates on the same basis as the layout and avoids an SDL
+    /// size query on every pointer event; reading `zoom_factor` live keeps
+    /// `set_zoom_factor`/ctrl-wheel zoom reflected within the same frame.
+    #[inline]
+    fn cached_pixels_per_point(&self) -> f32 {
+        let native_ppp = self
+            .egui_input
+            .viewports
+            .get(&self.viewport_id)
+            .and_then(|v| v.native_pixels_per_point)
+            .unwrap_or(1.0);
+        self.egui_ctx.zoom_factor() * native_ppp
+    }
+
+    /// Convert window pixel coordinates to egui points via [`Self::cached_pixels_per_point`].
+    #[inline]
+    fn pos_in_points(&self, x: f32, y: f32) -> egui::Pos2 {
+        let ppp = self.cached_pixels_per_point();
+        if ppp > 0.0 {
+            egui::pos2(x, y) / ppp
+        } else {
+            egui::pos2(x, y)
+        }
+    }
+
     /// Call this when there is a new event.
     ///
     /// The result can be extracted with [`Self::take_egui_input`].
@@ -198,12 +238,12 @@ impl State {
             Window { win_event, .. } => self.on_window_event(*win_event, window),
             MouseButtonDown {
                 mouse_btn, x, y, ..
-            } => self.on_mouse_button_event(window, *mouse_btn, true, *x, *y),
+            } => self.on_mouse_button_event(*mouse_btn, true, *x, *y),
             MouseButtonUp {
                 mouse_btn, x, y, ..
-            } => self.on_mouse_button_event(window, *mouse_btn, false, *x, *y),
+            } => self.on_mouse_button_event(*mouse_btn, false, *x, *y),
             MouseMotion { x, y, .. } => {
-                let pos = poiner_pos_in_points(&self.egui_ctx, window, *x as f32, *y as f32);
+                let pos = self.pos_in_points(*x as f32, *y as f32);
                 self.pointer_pos_in_points = Some(pos);
                 self.egui_input.events.push(egui::Event::PointerMoved(pos));
                 EventResponse {
@@ -310,7 +350,6 @@ impl State {
                 pressure,
                 ..
             } => self.on_touch(
-                window,
                 TouchInfo {
                     phase: egui::TouchPhase::Start,
                     touch_id: *touch_id,
@@ -328,7 +367,6 @@ impl State {
                 pressure,
                 ..
             } => self.on_touch(
-                window,
                 TouchInfo {
                     phase: egui::TouchPhase::End,
                     touch_id: *touch_id,
@@ -346,7 +384,6 @@ impl State {
                 pressure,
                 ..
             } => self.on_touch(
-                window,
                 TouchInfo {
                     phase: egui::TouchPhase::Move,
                     touch_id: *touch_id,
@@ -361,7 +398,7 @@ impl State {
     }
 
     #[inline]
-    fn on_touch(&mut self, window: &Window, info: TouchInfo) -> EventResponse {
+    fn on_touch(&mut self, info: TouchInfo) -> EventResponse {
         let consumed = match info.phase {
             egui::TouchPhase::Start | egui::TouchPhase::End | egui::TouchPhase::Cancel => {
                 self.egui_ctx.egui_wants_pointer_input()
@@ -371,12 +408,15 @@ impl State {
 
         // SDL finger coordinates are normalized to the window (0.0..=1.0), unlike
         // mouse events which arrive in window coordinates. Scale them to the
-        // window's pixel space so `poiner_pos_in_points` (which divides by ppp)
-        // yields the right egui position — otherwise every touch maps to ~(0,0).
-        let (win_w, win_h) = window.size();
+        // window's pixel space so `pos_in_points` (which divides by ppp) yields
+        // the right egui position — otherwise every touch maps to ~(0,0). Use the
+        // *cached* window size so this numerator shares one size basis with the
+        // cached ppp denominator below; mixing a live size here with the cached
+        // ppp would misplace touches during a mid-resize transient.
+        let (win_w, win_h) = self.window_size;
         let pixel_x = info.x * win_w as f32;
         let pixel_y = info.y * win_h as f32;
-        let pos = poiner_pos_in_points(&self.egui_ctx, window, pixel_x, pixel_y);
+        let pos = self.pos_in_points(pixel_x, pixel_y);
         self.egui_input.events.push(egui::Event::Touch {
             device_id: egui::TouchDeviceId(info.touch_id as u64),
             id: egui::TouchId::from(info.finger_id as u64),
@@ -493,7 +533,6 @@ impl State {
 
     fn on_mouse_button_event(
         &mut self,
-        window: &Window,
         button: MouseButton,
         pressed: bool,
         x: i32,
@@ -503,7 +542,7 @@ impl State {
             return EventResponse::default();
         };
 
-        let pos = poiner_pos_in_points(&self.egui_ctx, window, x as f32, y as f32);
+        let pos = self.pos_in_points(x as f32, y as f32);
         self.pointer_pos_in_points = Some(pos);
         self.egui_input.events.push(egui::Event::PointerButton {
             pos,
