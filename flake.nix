@@ -2,12 +2,14 @@
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
     utils.url = "github:numtide/flake-utils";
-    naersk.url = "github:nmattia/naersk/master";
+    naersk.url = "github:nix-community/naersk";
+    rust-overlay.url = "github:oxalica/rust-overlay";
   };
-  outputs = { self, nixpkgs, utils, naersk, ... }:
+  outputs = { self, nixpkgs, rust-overlay, utils, naersk, ... }:
     utils.lib.eachDefaultSystem (system:
       let
-        pkgs = import nixpkgs { inherit system; };
+        overlays = [ (import rust-overlay) ];
+        pkgs = import nixpkgs { inherit system overlays; };
         naersk' = pkgs.callPackage naersk { };
         libs = with pkgs; [
           libGL
@@ -34,7 +36,9 @@
         defaultApp = utils.lib.mkApp { drv = self.defaultPackage."${system}"; };
         devShell = with pkgs; mkShell {
           buildInputs = [
-            
+            (rust-bin.stable.latest.default.override {
+              extensions = ["clippy"];
+            })
           ] ++ libs;
 
           LD_LIBRARY_PATH = libPath;
