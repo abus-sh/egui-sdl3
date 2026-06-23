@@ -46,7 +46,8 @@ impl App {
         window.gl_make_current(&gl_ctx).unwrap();
         let glow_ctx = Arc::new(unsafe {
             glow::Context::from_loader_function(|name| {
-                video.gl_get_proc_address(name)
+                video
+                    .gl_get_proc_address(name)
                     .map_or(std::ptr::null(), |v| v as *const _)
             })
         });
