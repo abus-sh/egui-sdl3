@@ -1,10 +1,10 @@
 use crate::common::UiExample;
-use sdl2::event::{Event, WindowEvent};
+use sdl3::event::{Event, WindowEvent};
 use std::time::Duration;
 mod common;
 
 fn main() {
-    let sdl = sdl2::init().unwrap();
+    let sdl = sdl3::init().unwrap();
     let mut event_pump = sdl.event_pump().unwrap();
     let mut app = pollster::block_on(App::new(&sdl));
     let frame_dur = Duration::from_secs_f64(1.0 / common::TARGET_FPS);
@@ -20,19 +20,19 @@ fn main() {
 }
 
 struct App {
-    egui: egui_sdl2::EguiWgpu,
+    egui: egui_sdl3::EguiWgpu,
     ui: common::UiExample,
 }
 
 impl App {
-    pub async fn new(sdl: &sdl2::Sdl) -> Self {
+    pub async fn new(sdl: &sdl3::Sdl) -> Self {
         let video = sdl.video().unwrap();
         let window = video
-            .window("Egui SDL2 WGPU", 800, 600)
+            .window("Egui SDL3 WGPU", 800, 600)
             .resizable()
             .build()
             .unwrap();
-        let egui = egui_sdl2::EguiWgpu::new(window).await;
+        let egui = egui_sdl3::EguiWgpu::new(window).await;
 
         Self {
             egui,
@@ -45,7 +45,7 @@ impl App {
 
         if !resp.consumed {
             if let Event::Window {
-                win_event: WindowEvent::Close,
+                win_event: WindowEvent::CloseRequested,
                 ..
             } = event
             {

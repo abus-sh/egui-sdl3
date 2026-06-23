@@ -1,10 +1,10 @@
 use crate::common::UiExample;
-use sdl2::event::{Event, WindowEvent};
+use sdl3::event::{Event, WindowEvent};
 use std::time::Duration;
 mod common;
 
 fn main() {
-    let sdl = sdl2::init().unwrap();
+    let sdl = sdl3::init().unwrap();
     let mut event_pump = sdl.event_pump().unwrap();
     let mut app = App::new(&sdl);
     let frame_dur = Duration::from_secs_f64(1.0 / common::TARGET_FPS);
@@ -22,19 +22,19 @@ fn main() {
 }
 
 struct App {
-    egui: egui_sdl2::EguiCanvas,
+    egui: egui_sdl3::EguiCanvas,
     ui: UiExample,
 }
 
 impl App {
-    pub fn new(sdl: &sdl2::Sdl) -> Self {
+    pub fn new(sdl: &sdl3::Sdl) -> Self {
         let video = sdl.video().unwrap();
         let window = video
-            .window("Egui SDL2 Canvas", 800, 600)
+            .window("Egui SDL3 Canvas", 800, 600)
             .resizable()
             .build()
             .unwrap();
-        let egui = egui_sdl2::EguiCanvas::new(window);
+        let egui = egui_sdl3::EguiCanvas::new(window);
 
         Self {
             egui,
@@ -51,7 +51,7 @@ impl App {
 
         if !resp.consumed {
             if let Event::Window {
-                win_event: WindowEvent::Close,
+                win_event: WindowEvent::CloseRequested,
                 ..
             } = event
             {

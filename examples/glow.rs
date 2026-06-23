@@ -1,5 +1,5 @@
 use crate::common::UiExample;
-use sdl2::{
+use sdl3::{
     event::{Event, WindowEvent},
     video::GLContext,
 };
@@ -7,7 +7,7 @@ use std::{sync::Arc, time::Duration};
 mod common;
 
 fn main() {
-    let sdl = sdl2::init().unwrap();
+    let sdl = sdl3::init().unwrap();
     let mut event_pump = sdl.event_pump().unwrap();
     let mut app = App::new(&sdl);
     let frame_dur = Duration::from_secs_f64(1.0 / common::TARGET_FPS);
@@ -26,16 +26,16 @@ fn main() {
 
 struct App {
     _gl_ctx: GLContext,
-    window: sdl2::video::Window,
-    egui: egui_sdl2::EguiGlow,
+    window: sdl3::video::Window,
+    egui: egui_sdl3::EguiGlow,
     ui: UiExample,
 }
 
 impl App {
-    pub fn new(sdl: &sdl2::Sdl) -> Self {
+    pub fn new(sdl: &sdl3::Sdl) -> Self {
         let video = sdl.video().unwrap();
         let window = video
-            .window("Egui SDL2 Glow", 800, 600)
+            .window("Egui SDL3 Glow", 800, 600)
             .opengl()
             .resizable()
             .build()
@@ -45,9 +45,12 @@ impl App {
             .expect("Failed to create GL context");
         window.gl_make_current(&gl_ctx).unwrap();
         let glow_ctx = Arc::new(unsafe {
-            glow::Context::from_loader_function(|name| video.gl_get_proc_address(name) as *const _)
+            glow::Context::from_loader_function(|name| {
+                video.gl_get_proc_address(name)
+                    .map_or(std::ptr::null(), |v| v as *const _)
+            })
         });
-        let egui = egui_sdl2::EguiGlow::new(&window, glow_ctx, None, false);
+        let egui = egui_sdl3::EguiGlow::new(&window, glow_ctx, None, false);
 
         Self {
             _gl_ctx: gl_ctx,
@@ -66,7 +69,7 @@ impl App {
 
         if !resp.consumed {
             if let Event::Window {
-                win_event: WindowEvent::Close,
+                win_event: WindowEvent::CloseRequested,
                 ..
             } = event
             {
