@@ -1,4 +1,4 @@
-//! Integration between [`egui`] and [`glow`] for SDL2 applications.
+//! Integration between [`egui`] and [`glow`] for SDL3 applications.
 //!
 //! This module provides [`EguiGlow`], a convenience wrapper that bundles
 //! together:
@@ -8,18 +8,18 @@
 //!
 //! # When to use
 //! Use [`EguiGlow`] if you want to render egui using OpenGL through glow
-//! in an SDL2 application. If you prefer SDL2’s `Canvas` renderer, see the
+//! in an SDL3 application. If you prefer SDL3’s `Canvas` renderer, see the
 //! [`crate::canvas`] module instead.
 //!
 //! # Usage
 //! Typical usage is to:
-//! 1. Create an [`EguiGlow`] for your SDL2 window and GL context
-//! 2. Pass SDL2 events to [`crate::State::on_event`]
+//! 1. Create an [`EguiGlow`] for your SDL3 window and GL context
+//! 2. Pass SDL3 events to [`crate::State::on_event`]
 //! 3. Call [`egui::Context::run`] providing your UI fuction
 //! 4. Paint egui output via [`EguiGlow::paint`]
 //!
 
-/// Integration between [`egui`] and [`glow`] for app based on [`sdl2`].
+/// Integration between [`egui`] and [`glow`] for app based on [`sdl3`].
 pub struct EguiGlow {
     run_output: crate::EguiRunOutput,
     pub ctx: egui::Context,

@@ -1,13 +1,13 @@
-//! State management for egui + SDL2 integration.
+//! State management for egui + SDL3 integration.
 //!
 //! This module provides [`State`], which is responsible for translating
-//! SDL2 events and window data into egui input/output.
-//! Each SDL2 window (viewport) should have its own [`State`] instance.
+//! SDL3 events and window data into egui input/output.
+//! Each SDL3 window (viewport) should have its own [`State`] instance.
 //!
 //!  # Usage
 //! Typical usage is to:
-//! 1. Create a [`State`] from an SDL2 [`Window`]
-//! 2. Call [`State::on_event`] for every SDL2 event
+//! 1. Create a [`State`] from an SDL3 [`Window`]
+//! 2. Call [`State::on_event`] for every SDL3 event
 //! 3. Retrieve input via [`State::take_egui_input`] before each frame
 //! 4. Run your egui UI code
 //! 5. Apply [`egui::PlatformOutput`] (cursor, clipboard, etc.)
@@ -36,7 +36,7 @@ pub struct EventResponse {
     pub repaint: bool,
 }
 
-/// Handles the integration between egui and a sdl2 Window.
+/// Handles the integration between egui and a sdl3 Window.
 ///
 /// Instantiate one of these per viewport/window.
 pub struct State {
@@ -61,7 +61,7 @@ pub struct State {
 
 /// Represents currently active cursor.
 ///
-/// Contains egui icon and allocation of sdl2 cursor.
+/// Contains egui icon and allocation of sdl3 cursor.
 struct CurrentCursor {
     icon: egui::CursorIcon,
     cursor: Option<sdl3::mouse::Cursor>, // keep reference

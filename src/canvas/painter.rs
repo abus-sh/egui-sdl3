@@ -1,7 +1,7 @@
-//! Canvas backend for egui-sdl2.
+//! Canvas backend for egui-sdl3.
 //!
 //! This module provides [`Painter`], which integrates egui rendering with
-//! SDL2’s [`Canvas<Window>`].
+//! SDL3’s [`Canvas<Window>`].
 
 use egui::epaint::{ImageDelta, Primitive};
 use egui::{ClippedPrimitive, ImageData, TexturesDelta};
@@ -22,10 +22,10 @@ const PIXEL_FORMAT: PixelFormat = PixelFormat::RGBA8888;
 
 const BYTES_PER_PIXEL: usize = 4;
 
-/// An Canvas painter using [`sdl2`].
+/// An Canvas painter using [`sdl3`].
 ///
 /// This is responsible for painting egui and managing egui textures.
-/// You can access the underlying [`sdl2::video::Window`] with [`Self::canvas`].
+/// You can access the underlying [`sdl3::video::Window`] with [`Self::canvas`].
 ///
 /// This struct must be destroyed with [`Painter::destroy`] before dropping, to ensure
 /// objects have been properly deleted and are not leaked.

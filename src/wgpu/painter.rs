@@ -14,7 +14,7 @@ struct SurfaceState {
     height: u32,
 }
 
-/// Everything you need to paint egui with [`wgpu`](https://docs.rs/wgpu) on [`sdl2`].
+/// Everything you need to paint egui with [`wgpu`](https://docs.rs/wgpu) on [`sdl3`].
 pub struct Painter {
     context: egui::Context,
     configuration: WgpuConfiguration,
@@ -46,7 +46,7 @@ impl Painter {
     /// Before calling [`paint_and_update_textures()`](Self::paint_and_update_textures) a
     /// [`egui_wgpu::wgpu::Surface`] must be initialized (and corresponding render state) by calling
     /// [`set_window()`](Self::set_window) once you have
-    /// a [`sdl2::video::Window`] with a valid `.raw_window_handle()`
+    /// a [`sdl3::video::Window`] with a valid `.raw_window_handle()`
     /// associated.
     pub async fn new(
         context: egui::Context,
@@ -92,7 +92,7 @@ impl Painter {
         self.render_state.clone()
     }
 
-    /// Updates the [`sdl2::video::Window`] associated with the [`Painter`] without taking ownership of the window.
+    /// Updates the [`sdl3::video::Window`] associated with the [`Painter`] without taking ownership of the window.
     ///
     /// # Safety
     /// The user is responsible for ensuring that the window is alive for as long as it is set.

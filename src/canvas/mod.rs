@@ -1,26 +1,26 @@
-//! Integration between [`egui`] and SDL2’s [`sdl2::render::Canvas`] API.
+//! Integration between [`egui`] and SDL3’s [`sdl3::render::Canvas`] API.
 //!
 //! This module provides [`EguiCanvas`], a convenience wrapper that bundles
 //! together:
 //! - [`egui::Context`] for running your UI
 //! - [`crate::State`] for event and input handling
-//! - [`Painter`] for rendering using [`sdl2::render::Canvas`]
+//! - [`Painter`] for rendering using [`sdl3::render::Canvas`]
 //!
 //! # When to use
-//! Use [`EguiCanvas`] if you want to render egui using SDL2’s 2D canvas API
+//! Use [`EguiCanvas`] if you want to render egui using SDL3’s 2D canvas API
 //! instead of OpenGL.
 //!
 //! # Usage
 //! Typical usage is to:
-//! 1. Create an [`EguiCanvas`] for your SDL2 window and canvas
-//! 2. Pass SDL2 events to [`EguiCanvas::on_event`]
+//! 1. Create an [`EguiCanvas`] for your SDL3 window and canvas
+//! 2. Pass SDL3 events to [`EguiCanvas::on_event`]
 //! 3. Call [`EguiCanvas::run`] providing our UI function
 //! 4. Paint egui output via [`EguiCanvas::paint`]
 //!
 pub mod painter;
 pub use painter::*;
 
-/// Integration between [`egui`] and [`sdl2::render::Canvas`] for app based on [`sdl2`].
+/// Integration between [`egui`] and [`sdl3::render::Canvas`] for app based on [`sdl3`].
 pub struct EguiCanvas {
     run_output: crate::EguiRunOutput,
     pub ctx: egui::Context,

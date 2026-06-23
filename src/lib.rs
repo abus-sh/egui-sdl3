@@ -1,25 +1,25 @@
-//! # egui-sdl2
+//! # egui-sdl3
 //!
 //! Integration between [`egui`](https://github.com/emilk/egui) and
-//! [`sdl2`](https://github.com/Rust-SDL2/rust-sdl2).
+//! [`sdl3`](https://github.com/vhspace/sdl3-rs).
 //!
 //! ## Features
-//! - Translate SDL2 events into [`egui`] events.
+//! - Translate SDL3 events into [`egui`] events.
 //! - Handle [`egui::PlatformOutput`] (clipboard, cursor updates, links).
 //! - Render with OpenGL via [`glow`] (`glow-backend` feature).
-//! - Render with the SDL2 software renderer via [`sdl2::render::Canvas`] (`canvas-backend` feature).
+//! - Render with the SDL3 software renderer via [`sdl3::render::Canvas`] (`canvas-backend` feature).
 //!
 //! ## Usage
 //! ```no_run
-//! // Create SDL2 window:
-//! let sdl = sdl2::init().unwrap();
+//! // Create SDL3 window:
+//! let sdl = sdl3::init().unwrap();
 //! let video = sdl.video().unwrap();
-//! let window = video.window("Egui SDL2 Canvas", 800, 600).build().unwrap();
+//! let window = video.window("Egui SDL3 Canvas", 800, 600).build().unwrap();
 //! // Create egui renderer:
-//! let mut egui = egui_sdl2::EguiCanvas::new(window);
+//! let mut egui = egui_sdl3::EguiCanvas::new(window);
 //! let mut event_pump = sdl.event_pump().unwrap();
 //! loop {
-//!    // Feed SDL2 events into egui:
+//!    // Feed SDL3 events into egui:
 //!    for event in event_pump.poll_iter() {
 //!        egui.on_event(&event);
 //!    }

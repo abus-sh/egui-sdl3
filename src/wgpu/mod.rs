@@ -8,8 +8,8 @@
 
 //! # Usage
 //! Typical usage is to:
-//! 1. Create an [`EguiWgpu`] for your SDL2 window
-//! 2. Pass SDL2 events to [`EguiWgpu::on_event`]
+//! 1. Create an [`EguiWgpu`] for your SDL3 window
+//! 2. Pass SDL3 events to [`EguiWgpu::on_event`]
 //! 3. Call [`EguiWgpu::run`] providing our UI function
 //! 4. Paint egui output via [`EguiWgpu::paint`]
 //!
@@ -19,16 +19,16 @@ use std::num::NonZeroU32;
 pub mod painter;
 pub use painter::*;
 
-/// An owned, `'static` clone of an SDL2 window's display handle.
+/// An owned, `'static` clone of an SDL3 window's display handle.
 ///
 /// Since wgpu 29 / egui-wgpu 0.34 the wgpu instance must be created with a display handle
 /// on some platforms (e.g. Wayland on Linux), otherwise surface creation fails with
 /// `MissingDisplayHandle`. [`egui_wgpu::WgpuSetup::from_display_handle`] requires an owned
-/// `Send + Sync + 'static` handle, which the borrowed `DisplayHandle<'_>` from SDL2 is not.
+/// `Send + Sync + 'static` handle, which the borrowed `DisplayHandle<'_>` from SDL3 is not.
 #[derive(Clone, Copy, Debug)]
 struct SdlDisplayHandle(RawDisplayHandle);
 
-// SAFETY: a `RawDisplayHandle` is a plain pointer/id into the SDL2 video subsystem, which
+// SAFETY: a `RawDisplayHandle` is a plain pointer/id into the SDL3 video subsystem, which
 // stays alive for as long as the window we render to. We never mutate through it.
 unsafe impl Send for SdlDisplayHandle {}
 unsafe impl Sync for SdlDisplayHandle {}
@@ -40,7 +40,7 @@ impl HasDisplayHandle for SdlDisplayHandle {
     }
 }
 
-/// Integration between [`egui`] and [`wgpu`](https://docs.rs/wgpu) for app based on [`sdl2`].
+/// Integration between [`egui`] and [`wgpu`](https://docs.rs/wgpu) for app based on [`sdl3`].
 pub struct EguiWgpu {
     run_output: crate::EguiRunOutput,
     viewport_id: egui::ViewportId,
