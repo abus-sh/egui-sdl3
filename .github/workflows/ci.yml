@@ -14,8 +14,8 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Install SDL2
-        run: sudo apt-get update && sudo apt-get install -y libsdl2-dev
+      - name: Install SDL3
+        run: sudo apt-get update && sudo apt-get install -y libsdl3-dev
 
       - name: Install Rust (stable + Clippy + Rustfmt)
         uses: actions-rs/toolchain@v1
