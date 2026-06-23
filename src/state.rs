@@ -13,12 +13,12 @@
 //! 5. Apply [`egui::PlatformOutput`] (cursor, clipboard, etc.)
 //!
 use egui::{Key, Modifiers, MouseWheelUnit, PointerButton, Pos2, Rect};
-use sdl2::event::WindowEvent;
-use sdl2::keyboard::Keycode;
-use sdl2::keyboard::Mod;
-use sdl2::keyboard::Scancode;
-use sdl2::mouse::{Cursor, MouseButton, SystemCursor};
-use sdl2::video::Window;
+use sdl3::event::WindowEvent;
+use sdl3::keyboard::Keycode;
+use sdl3::keyboard::Mod;
+use sdl3::keyboard::Scancode;
+use sdl3::mouse::{Cursor, MouseButton, SystemCursor};
+use sdl3::video::Window;
 
 #[must_use]
 #[derive(Clone, Copy, Debug, Default)]
@@ -48,9 +48,9 @@ pub struct State {
     /// The finger currently driving synthesized pointer events. The first finger
     /// down becomes the pointer; extra fingers only feed multi-touch gestures so
     /// they don't emit phantom clicks. Cleared on its up/cancel.
-    pointer_touch_id: Option<i64>,
+    pointer_touch_id: Option<u64>,
     current_cursor: Option<CurrentCursor>,
-    clipboard: sdl2::clipboard::ClipboardUtil,
+    clipboard: sdl3::clipboard::ClipboardUtil,
     window_size: (u32, u32), // cache value and update on events
     // Drawable size in pixels, cached and refreshed on resize. `take_egui_input`
     // divides it by the *current* zoom each frame to rebuild `screen_rect`, so a
@@ -64,7 +64,7 @@ pub struct State {
 /// Contains egui icon and allocation of sdl2 cursor.
 struct CurrentCursor {
     icon: egui::CursorIcon,
-    cursor: Option<sdl2::mouse::Cursor>, // keep reference
+    cursor: Option<sdl3::mouse::Cursor>, // keep reference
 }
 
 impl State {
@@ -82,7 +82,7 @@ impl State {
             .native_pixels_per_point = Some(native_pixels_per_point(window));
         let clipboard = window.subsystem().clipboard();
         let window_size = window.size();
-        let drawable_size = window.drawable_size();
+        let drawable_size = window.size_in_pixels();
 
         State {
             egui_ctx,
@@ -230,10 +230,10 @@ impl State {
     /// The result can be extracted with [`Self::take_egui_input`].
     pub fn on_event(
         &mut self,
-        window: &sdl2::video::Window,
-        event: &sdl2::event::Event,
+        window: &sdl3::video::Window,
+        event: &sdl3::event::Event,
     ) -> EventResponse {
-        use sdl2::event::Event::*;
+        use sdl3::event::Event::*;
         match event {
             Window { win_event, .. } => self.on_window_event(*win_event, window),
             MouseButtonDown {
@@ -473,7 +473,7 @@ impl State {
             WindowEvent::Minimized
             | WindowEvent::Maximized
             | WindowEvent::Resized(_, _)
-            | WindowEvent::SizeChanged(_, _) => {
+            | WindowEvent::PixelSizeChanged(_, _) => {
                 self.on_size_chage(window);
                 EventResponse {
                     repaint: true,
@@ -485,12 +485,13 @@ impl State {
             | WindowEvent::Exposed
             | WindowEvent::Moved(_, _)
             | WindowEvent::Restored
-            | WindowEvent::Enter
-            | WindowEvent::Close => EventResponse {
+            | WindowEvent::MouseEnter
+            | WindowEvent::Occluded
+            | WindowEvent::CloseRequested => EventResponse {
                 consumed: false,
                 repaint: true,
             },
-            WindowEvent::Leave => {
+            WindowEvent::MouseLeave => {
                 self.pointer_pos_in_points = None;
                 self.egui_input.events.push(egui::Event::PointerGone);
                 EventResponse {
@@ -498,7 +499,7 @@ impl State {
                     consumed: false,
                 }
             }
-            WindowEvent::TakeFocus | WindowEvent::FocusGained => {
+            WindowEvent::FocusGained => {
                 self.egui_input.focused = true;
                 self.egui_input
                     .events
@@ -518,7 +519,7 @@ impl State {
                     consumed: false,
                 }
             }
-            WindowEvent::HitTest
+            WindowEvent::HitTest(_, _)
             | WindowEvent::ICCProfChanged
             | WindowEvent::DisplayChanged(_)
             | WindowEvent::None => EventResponse::default(),
@@ -529,14 +530,14 @@ impl State {
         &mut self,
         button: MouseButton,
         pressed: bool,
-        x: i32,
-        y: i32,
+        x: f32,
+        y: f32,
     ) -> EventResponse {
         let Some(button) = into_egui_button(button) else {
             return EventResponse::default();
         };
 
-        let pos = self.pos_in_points(x as f32, y as f32);
+        let pos = self.pos_in_points(x, y);
         self.pointer_pos_in_points = Some(pos);
         self.egui_input.events.push(egui::Event::PointerButton {
             pos,
@@ -590,7 +591,7 @@ impl State {
     #[inline]
     fn on_size_chage(&mut self, window: &Window) {
         self.window_size = window.size();
-        self.drawable_size = window.drawable_size();
+        self.drawable_size = window.size_in_pixels();
         self.egui_input.screen_rect = new_screen_rect(&self.egui_ctx, window);
         self.egui_input
             .viewports
@@ -608,7 +609,7 @@ impl State {
         }
 
         if self.pointer_pos_in_points.is_some() {
-            let system_cursor = into_sdl2_cursor(cursor_icon);
+            let system_cursor = into_sdl3_cursor(cursor_icon);
             let mut current_cursor = CurrentCursor {
                 icon: cursor_icon,
                 cursor: None,
@@ -667,7 +668,7 @@ pub fn into_egui_modifiers(m: Mod) -> Modifiers {
 }
 
 #[inline]
-fn into_sdl2_cursor(cursor_icon: egui::CursorIcon) -> SystemCursor {
+fn into_sdl3_cursor(cursor_icon: egui::CursorIcon) -> SystemCursor {
     match cursor_icon {
         egui::CursorIcon::Crosshair => SystemCursor::Crosshair,
         egui::CursorIcon::Default => SystemCursor::Arrow,
@@ -689,7 +690,7 @@ fn into_sdl2_cursor(cursor_icon: egui::CursorIcon) -> SystemCursor {
 
 #[inline]
 pub fn screen_size_in_pixels(window: &Window) -> egui::Vec2 {
-    let (width, height) = window.drawable_size();
+    let (width, height) = window.size_in_pixels();
     egui::vec2(width as f32, height as f32)
 }
 
@@ -712,7 +713,7 @@ fn new_screen_rect(egui_ctx: &egui::Context, window: &Window) -> Option<Rect> {
 #[inline]
 pub fn native_pixels_per_point(window: &Window) -> f32 {
     let (win_w, win_h) = window.size();
-    let (draw_w, _draw_h) = window.drawable_size();
+    let (draw_w, _draw_h) = window.size_in_pixels();
 
     if win_w > 0 && win_h > 0 {
         draw_w as f32 / win_w as f32
@@ -753,16 +754,16 @@ pub fn into_egui_key(key: Keycode) -> Option<Key> {
         Keycode::PageDown => Key::PageDown,
         Keycode::PageUp => Key::PageUp,
 
-        Keycode::Kp0 | Keycode::Num0 => Key::Num0,
-        Keycode::Kp1 | Keycode::Num1 => Key::Num1,
-        Keycode::Kp2 | Keycode::Num2 => Key::Num2,
-        Keycode::Kp3 | Keycode::Num3 => Key::Num3,
-        Keycode::Kp4 | Keycode::Num4 => Key::Num4,
-        Keycode::Kp5 | Keycode::Num5 => Key::Num5,
-        Keycode::Kp6 | Keycode::Num6 => Key::Num6,
-        Keycode::Kp7 | Keycode::Num7 => Key::Num7,
-        Keycode::Kp8 | Keycode::Num8 => Key::Num8,
-        Keycode::Kp9 | Keycode::Num9 => Key::Num9,
+        Keycode::Kp0 | Keycode::_0 => Key::Num0,
+        Keycode::Kp1 | Keycode::_1 => Key::Num1,
+        Keycode::Kp2 | Keycode::_2 => Key::Num2,
+        Keycode::Kp3 | Keycode::_3 => Key::Num3,
+        Keycode::Kp4 | Keycode::_4 => Key::Num4,
+        Keycode::Kp5 | Keycode::_5 => Key::Num5,
+        Keycode::Kp6 | Keycode::_6 => Key::Num6,
+        Keycode::Kp7 | Keycode::_7 => Key::Num7,
+        Keycode::Kp8 | Keycode::_8 => Key::Num8,
+        Keycode::Kp9 | Keycode::_9 => Key::Num9,
 
         Keycode::A => Key::A,
         Keycode::B => Key::B,
@@ -847,16 +848,16 @@ pub fn into_egui_physical_key(scancode: Scancode) -> Option<Key> {
         Scancode::Y => Some(Key::Y),
         Scancode::Z => Some(Key::Z),
 
-        Scancode::Num0 => Some(Key::Num0),
-        Scancode::Num1 => Some(Key::Num1),
-        Scancode::Num2 => Some(Key::Num2),
-        Scancode::Num3 => Some(Key::Num3),
-        Scancode::Num4 => Some(Key::Num4),
-        Scancode::Num5 => Some(Key::Num5),
-        Scancode::Num6 => Some(Key::Num6),
-        Scancode::Num7 => Some(Key::Num7),
-        Scancode::Num8 => Some(Key::Num8),
-        Scancode::Num9 => Some(Key::Num9),
+        Scancode::_0 => Some(Key::Num0),
+        Scancode::_1 => Some(Key::Num1),
+        Scancode::_2 => Some(Key::Num2),
+        Scancode::_3 => Some(Key::Num3),
+        Scancode::_4 => Some(Key::Num4),
+        Scancode::_5 => Some(Key::Num5),
+        Scancode::_6 => Some(Key::Num6),
+        Scancode::_7 => Some(Key::Num7),
+        Scancode::_8 => Some(Key::Num8),
+        Scancode::_9 => Some(Key::Num9),
 
         Scancode::F1 => Some(Key::F1),
         Scancode::F2 => Some(Key::F2),
@@ -888,8 +889,8 @@ pub fn into_egui_physical_key(scancode: Scancode) -> Option<Key> {
 
 struct TouchInfo {
     phase: egui::TouchPhase,
-    touch_id: i64,
-    finger_id: i64,
+    touch_id: u64,
+    finger_id: u64,
     x: f32,
     y: f32,
     pressure: f32,

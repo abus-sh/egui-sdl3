@@ -34,7 +34,7 @@
 pub use egui;
 #[cfg(feature = "glow-backend")]
 pub use egui_glow;
-pub use sdl2;
+pub use sdl3;
 
 #[cfg(feature = "canvas-backend")]
 pub mod canvas;

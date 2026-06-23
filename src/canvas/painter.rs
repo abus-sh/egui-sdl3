@@ -5,18 +5,20 @@
 
 use egui::epaint::{ImageDelta, Primitive};
 use egui::{ClippedPrimitive, ImageData, TexturesDelta};
-use sdl2::pixels::PixelFormatEnum;
-use sdl2::rect::Rect;
-use sdl2::render::{BlendMode, Canvas, Texture, TextureCreator};
-use sdl2::sys::{SDL_Color, SDL_FPoint, SDL_Vertex};
-use sdl2::video::{Window, WindowContext};
+use sdl3::pixels::PixelFormat;
+use sdl3::rect::Rect;
+use sdl3::render::{BlendMode, Canvas, Texture, TextureCreator};
+use sdl3::video::{Window, WindowContext};
+use sdl3_sys::pixels::SDL_FColor;
+use sdl3_sys::rect::SDL_FPoint;
+use sdl3_sys::render::SDL_Vertex;
 use std::collections::HashMap;
 use std::os::raw::c_int;
 
 #[cfg(target_endian = "little")]
-const PIXEL_FORMAT: PixelFormatEnum = PixelFormatEnum::ABGR8888;
+const PIXEL_FORMAT: PixelFormat = PixelFormat::ABGR8888;
 #[cfg(target_endian = "big")]
-const PIXEL_FORMAT: PixelFormatEnum = PixelFormatEnum::RGBA8888;
+const PIXEL_FORMAT: PixelFormat = PixelFormat::RGBA8888;
 
 const BYTES_PER_PIXEL: usize = 4;
 
@@ -45,8 +47,8 @@ pub struct Painter {
 }
 
 impl Painter {
-    pub fn new(window: sdl2::video::Window) -> Self {
-        let canvas: Canvas<Window> = window.into_canvas().build().unwrap();
+    pub fn new(window: sdl3::video::Window) -> Self {
+        let canvas: Canvas<Window> = window.into_canvas();
         let texture_creator = canvas.texture_creator();
 
         Self {
@@ -156,7 +158,7 @@ impl Painter {
 
         let min = clip_rect.min * pixels_per_point;
         let max = clip_rect.max * pixels_per_point;
-        let clip_rect = sdl2::rect::Rect::new(
+        let clip_rect = sdl3::rect::Rect::new(
             min.x as i32,
             min.y as i32,
             (max.x - min.x) as u32,
@@ -186,7 +188,7 @@ impl Painter {
         let indcs_len = mesh.indices.len() as c_int;
 
         let result = unsafe {
-            sdl2_sys::SDL_RenderGeometry(
+            sdl3_sys::render::SDL_RenderGeometry(
                 self.canvas.raw(),
                 texture_ptr,
                 if verts_len == 0 {
@@ -204,7 +206,7 @@ impl Painter {
             )
         };
 
-        if result != 0 {
+        if !result {
             log::error!("SDL_RenderGeometry failed: {}", result);
         }
     }
@@ -214,7 +216,7 @@ impl Painter {
 fn create_texture(texture_creator: &TextureCreator<WindowContext>, w: u32, h: u32) -> Texture {
     let mut tex = texture_creator
         .create_texture_streaming(PIXEL_FORMAT, w, h) // ABGR8888 on Little-Endian
-        .expect("Failed to create sdl2 texture");
+        .expect("Failed to create sdl3 texture");
     tex.set_blend_mode(BlendMode::Blend);
 
     tex
@@ -226,11 +228,11 @@ fn into_sdl_vertex(vertex: &egui::epaint::Vertex, pixels_per_point: f32) -> SDL_
             x: vertex.pos.x * pixels_per_point,
             y: vertex.pos.y * pixels_per_point,
         },
-        color: SDL_Color {
-            r: vertex.color.r(),
-            g: vertex.color.g(),
-            b: vertex.color.b(),
-            a: vertex.color.a(),
+        color: SDL_FColor {
+            r: (vertex.color.r() as f32) / 255.0,
+            g: (vertex.color.g() as f32) / 255.0,
+            b: (vertex.color.b() as f32) / 255.0,
+            a: (vertex.color.a() as f32) / 255.0,
         },
         tex_coord: SDL_FPoint {
             x: vertex.uv.x,

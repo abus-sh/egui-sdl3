@@ -99,7 +99,7 @@ impl Painter {
     pub async unsafe fn set_window(
         &mut self,
         viewport_id: ViewportId,
-        window: &sdl2::video::Window,
+        window: &sdl3::video::Window,
     ) -> Result<(), WgpuError> {
         let size = window.size();
         if !self.surfaces.contains_key(&viewport_id) {

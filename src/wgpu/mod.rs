@@ -47,18 +47,18 @@ pub struct EguiWgpu {
     pub ctx: egui::Context,
     pub state: crate::State,
     pub painter: painter::Painter,
-    pub window: sdl2::video::Window,
+    pub window: sdl3::video::Window,
 }
 
 impl EguiWgpu {
-    pub async fn new(window: sdl2::video::Window) -> Self {
+    pub async fn new(window: sdl3::video::Window) -> Self {
         let ctx = egui::Context::default();
         let viewport_id = egui::ViewportId::ROOT;
         let state = crate::State::new(&window, ctx.clone(), viewport_id);
         let run_output = crate::EguiRunOutput::default();
         let raw_display_handle = window
             .display_handle()
-            .expect("SDL2 window must expose a display handle")
+            .expect("SDL3 window must expose a display handle")
             .as_raw();
         let config = egui_wgpu::WgpuConfiguration {
             wgpu_setup: egui_wgpu::WgpuSetup::from_display_handle(SdlDisplayHandle(
@@ -84,13 +84,13 @@ impl EguiWgpu {
     }
 
     #[inline]
-    pub fn on_event(&mut self, event: &sdl2::event::Event) -> crate::EventResponse {
+    pub fn on_event(&mut self, event: &sdl3::event::Event) -> crate::EventResponse {
         match event {
-            sdl2::event::Event::Window {
+            sdl3::event::Event::Window {
                 window_id,
                 win_event:
-                    sdl2::event::WindowEvent::Resized(w, h)
-                    | sdl2::event::WindowEvent::SizeChanged(w, h),
+                    sdl3::event::WindowEvent::Resized(w, h)
+                    | sdl3::event::WindowEvent::PixelSizeChanged(w, h),
                 ..
             } if *window_id == self.window.id() && *w > 0 && *h > 0 => {
                 let w = NonZeroU32::new(*w as u32).unwrap();

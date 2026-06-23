@@ -30,7 +30,7 @@ pub struct EguiGlow {
 impl EguiGlow {
     /// For automatic shader version detection set `shader_version` to `None`.
     pub fn new(
-        window: &sdl2::video::Window,
+        window: &sdl3::video::Window,
         glow_ctx: std::sync::Arc<glow::Context>,
         shader_version: Option<egui_glow::ShaderVersion>,
         dithering: bool,

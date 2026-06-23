@@ -29,7 +29,7 @@ pub struct EguiCanvas {
 }
 
 impl EguiCanvas {
-    pub fn new(window: sdl2::video::Window) -> Self {
+    pub fn new(window: sdl3::video::Window) -> Self {
         let ctx = egui::Context::default();
         let state = crate::State::new(&window, ctx.clone(), egui::ViewportId::ROOT);
         let run_output = crate::EguiRunOutput::default();
@@ -44,7 +44,7 @@ impl EguiCanvas {
     }
 
     #[inline]
-    pub fn on_event(&mut self, event: &sdl2::event::Event) -> crate::EventResponse {
+    pub fn on_event(&mut self, event: &sdl3::event::Event) -> crate::EventResponse {
         self.state.on_event(self.painter.canvas.window(), event)
     }
 
@@ -77,7 +77,7 @@ impl EguiCanvas {
 
     #[inline]
     pub fn clear(&mut self, color: [u8; 4]) {
-        let color = sdl2::pixels::Color::RGBA(color[0], color[1], color[2], color[3]);
+        let color = sdl3::pixels::Color::RGBA(color[0], color[1], color[2], color[3]);
         self.painter.canvas.set_draw_color(color);
         self.painter.canvas.clear();
     }
