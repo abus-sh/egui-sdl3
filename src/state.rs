@@ -243,7 +243,7 @@ impl State {
                 mouse_btn, x, y, ..
             } => self.on_mouse_button_event(*mouse_btn, false, *x, *y),
             MouseMotion { x, y, .. } => {
-                let pos = self.pos_in_points(*x as f32, *y as f32);
+                let pos = self.pos_in_points(*x, *y);
                 self.pointer_pos_in_points = Some(pos);
                 self.egui_input.events.push(egui::Event::PointerMoved(pos));
                 EventResponse {
@@ -252,8 +252,8 @@ impl State {
                 }
             }
             MouseWheel { x, y, .. } => {
-                let dx = *x as f32;
-                let dy = *y as f32;
+                let dx = *x;
+                let dy = *y;
 
                 if self.egui_input.modifiers.command {
                     // zoom
@@ -412,8 +412,8 @@ impl State {
         let pixel_y = info.y * win_h as f32;
         let pos = self.pos_in_points(pixel_x, pixel_y);
         self.egui_input.events.push(egui::Event::Touch {
-            device_id: egui::TouchDeviceId(info.touch_id as u64),
-            id: egui::TouchId::from(info.finger_id as u64),
+            device_id: egui::TouchDeviceId(info.touch_id),
+            id: egui::TouchId::from(info.finger_id),
             phase: info.phase,
             pos,
             force: Some(info.pressure),
