@@ -2,12 +2,15 @@
 name = "egui-sdl3"
 version = "0.4.0"
 edition = "2021"
-authors = ["troidem <mxmgorin@gmail.com>"]
+authors = [
+    "troidem <mxmgorin@gmail.com>",
+    "Abus <git@abus.sh>",
+]
 description = "egui + SDL3: event handling and rendering via OpenGL, Canvas, WebGPU"
 readme = "README.md"
 license = "MIT OR Apache-2.0"
-repository = "https://github.com/mxmgorin/egui-sdl2"
-homepage = "https://github.com/mxmgorin/egui-sdl2"
+repository = "https://github.com/abus-sh/egui-sdl3"
+homepage = "https://github.com/abus-sh/egui-sdl3"
 keywords = ["sdl3", "egui", "gui", "gamedev"]
 categories = ["gui"]
 include = ["../LICENSE-APACHE", "../LICENSE-MIT", "**/*.rs", "Cargo.toml"]
